@@ -48,14 +48,14 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 			IConnection conn = Connect();
 			Exception e = Try(() => d(conn));
 			if (e == null) return;
-			if (!Reconnect(d)) throw e;
+			if (!Reconnect(d)) throw e;		// TODO: This exception should probably be wrapped to preserve the initial stack trace
 		}
 
 		public bool Try(Thunk t, ConnectionDelegate d)
 		{
 			Exception e = Try(t);
 			if (e == null) return true;
-			if (!Reconnect(d)) throw e;
+			if (!Reconnect(d)) throw e;		// TODO: This exception should probably be wrapped to preserve the initial stack trace
 			return false;
 		}
 
@@ -139,7 +139,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 				}
 				else
 				{
-					throw e;
+					throw;
 				}
 			}
 			catch (Client.Exceptions.OperationInterruptedException e)
@@ -150,7 +150,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 				}
 				else
 				{
-					throw e;
+					throw;
 				}
 			}
 			catch (Client.Exceptions.BrokerUnreachableException e)

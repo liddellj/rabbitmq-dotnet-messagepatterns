@@ -40,7 +40,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 			set { m_connector = value; }
 		}
 
-		public event SetupDelegate SetupSender;
+		public event SetupDelegate Setup;
 
 		public String Identity
 		{
@@ -95,8 +95,8 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 		{
 			m_channel = conn.CreateModel();
 			if (Transactional) m_channel.TxSelect();
-			SetupDelegate setupHandler = SetupSender;
-			if (setupHandler != null) SetupSender(m_channel);
+			SetupDelegate setupHandler = Setup;
+			if (setupHandler != null) Setup(m_channel);
 		}
 
 		protected String NextId()
@@ -160,7 +160,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 			set { m_connector = value; }
 		}
 
-		public event SetupDelegate SetupReceiver;
+		public event SetupDelegate Setup;
 
 		public String Identity
 		{
@@ -191,8 +191,8 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 		protected void Connect(IConnection conn)
 		{
 			m_channel = conn.CreateModel();
-			SetupDelegate setupHandler = SetupReceiver;
-			if (setupHandler != null) SetupReceiver(m_channel);
+			SetupDelegate setupHandler = Setup;
+			if (setupHandler != null) Setup(m_channel);
 			Consume();
 		}
 
@@ -267,19 +267,31 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 			set { m_sender.Connector = value; m_receiver.Connector = value; }
 		}
 
-		public event SetupDelegate Setup
+		event SetupDelegate IMessaging.Setup
 		{
-			add { m_sender.SetupSender += value; m_receiver.SetupReceiver += value; }
-			remove { m_sender.SetupSender -= value; m_receiver.SetupReceiver -= value; }
+			add { m_sender.Setup += value; m_receiver.Setup += value; }
+			remove { m_sender.Setup -= value; m_receiver.Setup -= value; }
 		}
 
-		public event SetupDelegate SetupSender {
-			add { m_sender.SetupSender += value; }
-			remove { m_sender.SetupSender -= value; }
+		event SetupDelegate ISender.Setup 
+		{
+			add { m_sender.Setup += value; }
+			remove { m_sender.Setup -= value; }
 		}
-		public event SetupDelegate SetupReceiver {
-			add { m_receiver.SetupReceiver += value; }
-			remove { m_receiver.SetupReceiver -= value; }
+		public event SetupDelegate SetupSender 
+		{
+			add { m_sender.Setup += value; }
+			remove { m_sender.Setup -= value; }
+		}
+		event SetupDelegate IReceiver.Setup 
+		{
+			add { m_receiver.Setup += value; }
+			remove { m_receiver.Setup -= value; }
+		}
+		public event SetupDelegate SetupReceiver 
+		{
+			add { m_receiver.Setup += value; }
+			remove { m_receiver.Setup -= value; }
 		}
 
 		public String Identity

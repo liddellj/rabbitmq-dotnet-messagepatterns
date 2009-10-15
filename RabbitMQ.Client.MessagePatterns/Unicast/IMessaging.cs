@@ -48,7 +48,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 		/// Event issued when a connection requires setup. This will be fired upon initial connection, and
 		/// then whenever a failure requires the connection to be re-established.
 		/// </summary>
-		event SetupDelegate SetupSender;
+		event SetupDelegate Setup;
 
 		String ExchangeName { get; set; }
 		bool Transactional { get; set; }
@@ -74,7 +74,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 		/// Event issued when a connection requires setup. This will be fired upon initial connection, and
 		/// then whenever a failure requires the connection to be re-established.
 		/// </summary>
-		event SetupDelegate SetupReceiver;
+		event SetupDelegate Setup;
 
 		String QueueName { get; set; }
 
@@ -94,7 +94,10 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 		/// Event issued when a connection requires setup. This will be fired upon initial connection, and
 		/// then whenever a failure requires the connection to be re-established.
 		/// </summary>
-		event SetupDelegate Setup;
+		new event SetupDelegate Setup;
+
+		event SetupDelegate SetupSender;
+		event SetupDelegate SetupReceiver;
 
 		new void Init();
 		new void Init(long msgIdPrefix);

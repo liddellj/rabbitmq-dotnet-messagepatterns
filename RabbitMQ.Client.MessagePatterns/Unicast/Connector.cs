@@ -85,12 +85,14 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 						throw new Client.Exceptions.AlreadyClosedException
 							(closeReason);
 				}
+				OnStateChange(ConnectorState.Reconnecting);
 				Exception e = null;
 				for (int i = 0; i < Attempts; i++)
 				{
 					e = Try(delegate {
 					        	m_connection = ConnectionBuilder.CreateConnection();
 					        });
+					OnStateChange(ConnectorState.Connected);
 					if (e == null) return m_connection;
 					if (m_closed.WaitOne(Pause)) break;
 				}

@@ -1,3 +1,5 @@
+using NUnit.Framework;
+using RabbitMQ.Client.MessagePatterns.Test.Support;
 using RabbitMQ.Client.MessagePatterns.Unicast;
 using RabbitMQ.Patterns.Configuration;
 using RabbitMQ.Patterns.Unicast;
@@ -6,44 +8,7 @@ namespace RabbitMQ.Client.MessagePatterns.Test.Unicast {
 	using RabbitMQ.Client;
 	using RabbitMQ.Client.Exceptions;
 	using RabbitMQ.Client.MessagePatterns.Unicast;
-
 	using EndOfStreamException = System.IO.EndOfStreamException;
-
-	//TODO: this class should live in a separate assembly
-	public class TestHelper
-	{
-
-		public static void Sent(IMessage m)
-		{
-			LogMessage("sent", m.From, m);
-		}
-
-		public static void LogMessage(string action,
-									  string actor,
-									  IMessage m)
-		{
-			System.Console.WriteLine("{0} {1} {2}",
-									 actor, action, Decode(m.Body));
-		}
-
-		public static void LogMessage(string action,
-									  IMessaging actor,
-									  IMessage m)
-		{
-			LogMessage(action, actor.Identity, m);
-		}
-
-		public static byte[] Encode(string s)
-		{
-			return System.Text.Encoding.UTF8.GetBytes(s);
-		}
-
-		public static string Decode(byte[] b)
-		{
-			return System.Text.Encoding.UTF8.GetString(b);
-		}
-
-	}
 
 	public delegate SetupDelegate MessagingClosure(IMessaging m);
 
@@ -51,45 +16,38 @@ namespace RabbitMQ.Client.MessagePatterns.Test.Unicast {
 	//non-durable, to avoid manual cleanup. More typically the
 	//resources would be non-auto-delete/non-exclusive and durable, so
 	//that they survives server and client restarts.
-
-	public class Tests
+	[TestFixture]
+	public class UnicastTest
 	{
+		private ConnectionFactory _factory;
+		private AmqpTcpEndpoint _server;
+		private ConnectionBuilder _builder;
 
-		public static int Main(string[] args)
-		{
-
-			ConnectionFactory factory = new ConnectionFactory();
-			AmqpTcpEndpoint server = new AmqpTcpEndpoint();
-
-			TestDirect(factory, server);
-			TestRelayed(factory, server);
-			TestPreconfigured(factory, server);
-
-			return 0;
+		public UnicastTest() {
+			_factory = new ConnectionFactory();
+			_server = new AmqpTcpEndpoint();
+			_builder = new ConnectionBuilder(_factory, _server);
 		}
 
-		protected static void DeclareExchange(IModel m,
-											  string name, string type)
+		protected void DeclareExchange(IModel m, string name, string type)
 		{
-			m.ExchangeDeclare(name, type,
-							  false, false, true, false, false, null);
+			m.ExchangeDeclare(name, type, false, false, true, false, false, null);
 		}
 
-		protected static void DeclareQueue(IModel m, string name)
+		protected void DeclareQueue(IModel m, string name)
 		{
 			m.QueueDeclare(name, false, false, false, true, false, null);
 		}
 
-		protected static void BindQueue(IModel m,
-										string q, string x, string rk)
+		protected void BindQueue(IModel m, string q, string x, string rk)
 		{
 			m.QueueBind(q, x, rk, false, null);
 		}
 
-		protected static void TestDirect(ConnectionFactory factory,
-										 AmqpTcpEndpoint server)
+		[Test]
+		public void TestDirect()
 		{
-			using (IConnector conn = Factory.CreateConnector(new ConnectionBuilder(factory, server)))
+			using (IConnector conn = Factory.CreateConnector(_builder))
 			{
 				//create two parties
 				IMessaging foo = Factory.CreateMessaging();
@@ -132,8 +90,8 @@ namespace RabbitMQ.Client.MessagePatterns.Test.Unicast {
 			}
 		}
 
-		protected static void TestRelayed(ConnectionFactory factory,
-										  AmqpTcpEndpoint server)
+		[Test]
+		public void TestRelayed()
 		{
 			MessagingClosure senderSetup = delegate(IMessaging m)
 			{
@@ -151,17 +109,15 @@ namespace RabbitMQ.Client.MessagePatterns.Test.Unicast {
 					BindQueue(channel, m.QueueName, "out", m.QueueName);
 				};
 			};
-			TestRelayedHelper(senderSetup, receiverSetup, factory, server);
+			TestRelayedHelper(senderSetup, receiverSetup, _builder);
 		}
 
-		protected static void TestRelayedHelper(MessagingClosure senderSetup,
-												MessagingClosure receiverSetup,
-												ConnectionFactory factory,
-												AmqpTcpEndpoint server)
+		protected void TestRelayedHelper(MessagingClosure senderSetup,
+										 MessagingClosure receiverSetup,
+										 ConnectionBuilder builder)
 		{
-			var connBuilder = new ConnectionBuilder(factory, server);
-			using (IConnector conn = Factory.CreateConnector(connBuilder),
-				   relayConn = Factory.CreateConnector(connBuilder))
+			using (IConnector conn = Factory.CreateConnector(builder),
+				   relayConn = Factory.CreateConnector(builder))
 			{
 
 				//create relay 
@@ -247,13 +203,13 @@ namespace RabbitMQ.Client.MessagePatterns.Test.Unicast {
 
 		}
 
-		protected static void TestPreconfigured(ConnectionFactory factory,
-												AmqpTcpEndpoint server)
+		[Test]
+		public void TestPreconfigured()
 		{
 			//The idea here is to simulate a setup where are the
 			//resources are pre-declared outside the Unicast messaging
 			//framework.
-			using (IConnection conn = factory.CreateConnection(server))
+			using (IConnection conn = _builder.CreateConnection())
 			{
 				IModel ch = conn.CreateModel();
 
@@ -276,7 +232,7 @@ namespace RabbitMQ.Client.MessagePatterns.Test.Unicast {
 			{
 				return delegate(IModel channel) { };
 			};
-			TestRelayedHelper(dummy, dummy, factory, server);
+			TestRelayedHelper(dummy, dummy, _builder);
 		}
 
 	}

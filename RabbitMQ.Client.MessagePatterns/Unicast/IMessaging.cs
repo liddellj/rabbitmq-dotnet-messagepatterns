@@ -1,5 +1,4 @@
 using System;
-using RabbitMQ.Patterns.Configuration;
 using RabbitMQ.Patterns.Unicast;
 
 namespace RabbitMQ.Client.MessagePatterns.Unicast {
@@ -79,6 +78,8 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 		String QueueName { get; set; }
 
 		void Init();
+
+		void Cancel();
 
 		IReceivedMessage Receive();
 		IReceivedMessage ReceiveNoWait();

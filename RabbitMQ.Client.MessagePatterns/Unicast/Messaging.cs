@@ -153,6 +153,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 
 		protected QueueingMessageConsumer m_consumer;
 		protected string m_consumerTag;
+		private bool m_cancelled = false;
 
 		public IConnector Connector
 		{
@@ -190,6 +191,11 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 
 		protected void Connect(IConnection conn)
 		{
+			lock (this) 
+			{
+				if (m_cancelled) return;
+			}
+
 			m_channel = conn.CreateModel();
 			SetupDelegate setupHandler = Setup;
 			if (setupHandler != null) Setup(m_channel);
@@ -203,8 +209,13 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 				(QueueName, false, null, m_consumer);
 		}
 
-		protected void Cancel()
+		public void Cancel()
 		{
+			lock (this) 
+			{
+				m_cancelled = true;	
+			}
+
 			m_channel.BasicCancel(m_consumerTag);
 		}
 
@@ -213,6 +224,11 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 			IReceivedMessage res = null;
 			while (true)
 			{
+				lock (this) 
+				{
+					if (m_cancelled) throw new EndOfStreamException();
+				}
+
 				if (Connector.Try(delegate()
 				                  {
 				                  	res = m_consumer.Queue.Dequeue()
@@ -384,6 +400,11 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 		public void Ack(IReceivedMessage m)
 		{
 			m_receiver.Ack(m);
+		}
+
+		public void Cancel() 
+		{
+			m_receiver.Cancel();	
 		}
 
 		public Messaging()

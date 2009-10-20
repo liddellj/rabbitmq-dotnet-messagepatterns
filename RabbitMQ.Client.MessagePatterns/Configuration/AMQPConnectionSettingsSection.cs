@@ -1,6 +1,6 @@
 ﻿using System.Configuration;
 
-namespace RabbitMQ.Patterns.Configuration {
+namespace RabbitMQ.Client.MessagePatterns.Configuration {
 	/// <summary>
 	/// Configuration section for configuring an AMQP broker connection.
 	/// </summary>
@@ -9,7 +9,7 @@ namespace RabbitMQ.Patterns.Configuration {
 	///   <code>
 	///     <config>
 	///         <configSections>
-	///             <section name="amqp" type="RabbitMQ.Patterns.Configuration.AmqpConnectionSettingsSection, RabbitMQ.Patterns" />
+	///             <section name="amqp" type="RabbitMQ.Client.MessagePatterns.Configuration.AmqpConnectionSettingsSection, RabbitMQ.Patterns" />
 	///         </configSections>
 	///         <amqp>
 	///            <connection name="trades" server="localhost" />

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RabbitMQ.Client;
-using RabbitMQ.Patterns.Configuration;
+using RabbitMQ.Client.MessagePatterns.Configuration;
 
 namespace RabbitMQ.Client.MessagePatterns.Unicast {
 	public static class Factory

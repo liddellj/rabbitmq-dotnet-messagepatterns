@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using RabbitMQ.Client.Framing.v0_8;
-using RabbitMQ.Patterns.Configuration;
+using RabbitMQ.Client.MessagePatterns.Configuration;
 
 namespace RabbitMQ.Client.MessagePatterns.Unicast {
 	class Connector : IConnector

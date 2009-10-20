@@ -228,8 +228,8 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 										if (m_consumer.ShutdownReason == null) 
 										{
 											// EndOfStream with a missing ShutdownReason indicates that 
-											// a CancelOk came in.
-											res = null;
+											// a CancelOk came in. Ignore the exception, and let the null
+											// res filter out.
 									  	}
 									    else 
 										{
@@ -264,8 +264,8 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 										if (m_consumer.ShutdownReason == null)
 										{
 											// EndOfStream with a missing ShutdownReason indicates that 
-											// a CancelOk came in.
-											res = null;
+											// a CancelOk came in. Ignore the exception, and let the null
+											// res filter out.
 										}
 										else
 										{
@@ -276,7 +276,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 				                  }, Connect)) break;
 			}
 
-			if (m_consumer != null && m_consumer.ShutdownReason == null) 
+			if (res == null && m_consumer != null && m_consumer.ShutdownReason == null) 
 			{
 				throw new EndOfStreamException();	
 			}

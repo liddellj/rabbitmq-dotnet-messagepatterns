@@ -3,12 +3,6 @@ using RabbitMQ.Patterns.Unicast;
 
 namespace RabbitMQ.Client.MessagePatterns.Unicast {
 	/// <summary>
-	/// 
-	/// </summary>
-	/// <param name="conn"></param>
-	public delegate void ConnectionDelegate(IConnection conn);
-
-	/// <summary>
 	/// Delegate used to subscribe to message related events that can be emitted from
 	/// the IMessaging infrastructure.
 	/// </summary>

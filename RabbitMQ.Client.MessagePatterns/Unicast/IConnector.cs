@@ -22,6 +22,13 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 	}
 
 	/// <summary>
+	/// Delegate used to allow a consumer of a connector to re-establish their own resources on top
+	/// of a connection.
+	/// </summary>
+	/// <param name="conn">the connection that has been established</param>
+	public delegate void ConnectionDelegate(IConnection conn);
+
+	/// <summary>
 	/// No-args delegate to be provided in re-retryable operations.
 	/// </summary>
 	public delegate void Thunk();

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using RabbitMQ.Client.Framing.v0_8;
 using RabbitMQ.Patterns.Unicast;
 
 namespace RabbitMQ.Client.MessagePatterns.Unicast {
@@ -153,8 +154,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 
 		protected QueueingMessageConsumer m_consumer;
 		protected string m_consumerTag;
-		private bool m_cancelled = false;
-
+		
 		public IConnector Connector
 		{
 			get { return m_connector; }
@@ -191,15 +191,12 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 
 		protected void Connect(IConnection conn)
 		{
-			lock (this) 
-			{
-				if (m_cancelled) return;
-			}
-
 			m_channel = conn.CreateModel();
 			SetupDelegate setupHandler = Setup;
 			if (setupHandler != null) Setup(m_channel);
 			Consume();
+
+			return;
 		}
 
 		protected void Consume()
@@ -211,12 +208,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 
 		public void Cancel()
 		{
-			lock (this) 
-			{
-				m_cancelled = true;	
-			}
-
-			m_channel.BasicCancel(m_consumerTag);
+			Connector.Try(() => m_channel.BasicCancel(m_consumerTag), Connect);
 		}
 
 		public IReceivedMessage Receive()
@@ -224,17 +216,34 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 			IReceivedMessage res = null;
 			while (true)
 			{
-				lock (this) 
-				{
-					if (m_cancelled) throw new EndOfStreamException();
-				}
-
 				if (Connector.Try(delegate()
 				                  {
-				                  	res = m_consumer.Queue.Dequeue()
-				                  	      as IReceivedMessage;
+									  try
+									  {
+										  res = m_consumer.Queue.Dequeue()
+												as IReceivedMessage;
+									  }
+									  catch (EndOfStreamException) 
+									  {
+										if (m_consumer.ShutdownReason == null) 
+										{
+											// EndOfStream with a missing ShutdownReason indicates that 
+											// a CancelOk came in.
+											res = null;
+									  	}
+									    else 
+										{
+											throw;	
+										}
+									  }
 				                  }, Connect)) break;
 			}
+
+			if (res == null) 
+			{
+				throw new EndOfStreamException();	
+			}
+
 			return res;
 		}
 
@@ -245,10 +254,33 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 			{
 				if (Connector.Try(delegate()
 				                  {
-				                  	res = m_consumer.Queue.DequeueNoWait(null)
-				                  	      as IReceivedMessage;
+				                  	try 
+									{
+										res = m_consumer.Queue.DequeueNoWait(null)
+											  as IReceivedMessage;
+				                  	}
+				                  	catch (EndOfStreamException) 
+									{
+										if (m_consumer.ShutdownReason == null)
+										{
+											// EndOfStream with a missing ShutdownReason indicates that 
+											// a CancelOk came in.
+											res = null;
+										}
+										else
+										{
+											throw;
+										}
+				                  	}
+				                  		
 				                  }, Connect)) break;
 			}
+
+			if (m_consumer != null && m_consumer.ShutdownReason == null) 
+			{
+				throw new EndOfStreamException();	
+			}
+
 			return res;
 		}
 
@@ -268,7 +300,6 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 			              	m_channel.BasicAck(r.Delivery.DeliveryTag, false);
 			              }, Connect);
 		}
-
 	}
 
 	internal class Messaging : IMessaging

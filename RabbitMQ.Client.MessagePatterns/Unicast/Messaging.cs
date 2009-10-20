@@ -225,16 +225,11 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 									  }
 									  catch (EndOfStreamException) 
 									  {
-										if (m_consumer.ShutdownReason == null) 
-										{
-											// EndOfStream with a missing ShutdownReason indicates that 
-											// a CancelOk came in. Ignore the exception, and let the null
-											// res filter out.
-									  	}
-									    else 
-										{
-											throw;	
-										}
+										  // EndOfStream with a missing ShutdownReason indicates that 
+										  // a CancelOk came in. Ignore the exception, and let the null
+										  // res filter out.
+
+										  if (m_consumer.ShutdownReason != null) throw;
 									  }
 				                  }, Connect)) break;
 			}
@@ -261,16 +256,11 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 				                  	}
 				                  	catch (EndOfStreamException) 
 									{
-										if (m_consumer.ShutdownReason == null)
-										{
-											// EndOfStream with a missing ShutdownReason indicates that 
-											// a CancelOk came in. Ignore the exception, and let the null
-											// res filter out.
-										}
-										else
-										{
-											throw;
-										}
+										// EndOfStream with a missing ShutdownReason indicates that 
+										// a CancelOk came in. Ignore the exception, and let the null
+										// res filter out.
+
+										if (m_consumer.ShutdownReason != null) throw;
 				                  	}
 				                  		
 				                  }, Connect)) break;

@@ -1,8 +1,7 @@
 using System;
 using RabbitMQ.Client.MessagePatterns.Configuration;
-using RabbitMQ.Patterns.Unicast;
 
-namespace RabbitMQ.Client.MessagePatterns.Unicast.Test {
+namespace RabbitMQ.Client.MessagePatterns.Demo {
 
     using RabbitMQ.Client;
     using RabbitMQ.Client.MessagePatterns.Unicast;

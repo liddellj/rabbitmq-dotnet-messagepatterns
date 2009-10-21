@@ -1,8 +1,6 @@
 using NUnit.Framework;
 using RabbitMQ.Client.MessagePatterns.Configuration;
 using RabbitMQ.Client.MessagePatterns.Test.Support;
-using RabbitMQ.Client.MessagePatterns.Unicast;
-using RabbitMQ.Patterns.Unicast;
 
 namespace RabbitMQ.Client.MessagePatterns.Test.Unicast {
     using RabbitMQ.Client;

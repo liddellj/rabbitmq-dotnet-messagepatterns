@@ -1,5 +1,4 @@
 using RabbitMQ.Client.MessagePatterns.Unicast;
-using RabbitMQ.Patterns.Unicast;
 
 namespace RabbitMQ.Client.MessagePatterns.Test.Support {
     public class TestHelper {

@@ -9,7 +9,7 @@ namespace RabbitMQ.Client.MessagePatterns.Configuration {
     ///   <code>
     ///     <config>
     ///         <configSections>
-    ///             <section name="amqp" type="RabbitMQ.Client.MessagePatterns.Configuration.AmqpConnectionSettingsSection, RabbitMQ.Patterns" />
+    ///             <section name="amqp" type="RabbitMQ.Client.MessagePatterns.Configuration.AmqpConnectionSettingsSection, RabbitMQ.Client.MessagePatterns" />
     ///         </configSections>
     ///         <amqp>
     ///            <connection name="trades" server="localhost" />

@@ -1,6 +1,5 @@
-﻿using RabbitMQ.Client;
-
-namespace RabbitMQ.Patterns.Unicast {
+﻿namespace RabbitMQ.Client.MessagePatterns.Unicast
+{
     using Address   = System.String;
     using MessageId = System.String;
     using Name      = System.String;

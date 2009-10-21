@@ -1,8 +1,7 @@
 ﻿using System;
-using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-namespace RabbitMQ.Patterns.Unicast {
+namespace RabbitMQ.Client.MessagePatterns.Unicast {
     using Address = String;
     using MessageId = String;
 
@@ -75,7 +74,7 @@ namespace RabbitMQ.Patterns.Unicast {
                                      Body,
                                      RoutingKey);
             m.From = To;
-            m.To = ReplyTo == null ? From : ReplyTo;
+            m.To = ReplyTo ?? From;
             m.ReplyTo = null;
             m.CorrelationId = MessageId;
             m.MessageId = null;

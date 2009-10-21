@@ -1,5 +1,4 @@
 using System;
-using RabbitMQ.Patterns.Unicast;
 
 namespace RabbitMQ.Client.MessagePatterns.Unicast {
     /// <summary>

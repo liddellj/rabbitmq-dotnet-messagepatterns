@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using RabbitMQ.Patterns.Unicast;
 using RabbitMQ.Util;
 
 namespace RabbitMQ.Client.MessagePatterns.Unicast {

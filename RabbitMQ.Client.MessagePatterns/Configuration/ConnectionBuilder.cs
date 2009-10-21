@@ -1,8 +1,7 @@
 ﻿using System.Configuration;
 
 namespace RabbitMQ.Client.MessagePatterns.Configuration {
-    public class ConnectionBuilder
-    {
+    public class ConnectionBuilder {
         private readonly ConnectionFactory _factory;
         private readonly AmqpTcpEndpoint[] _servers;
 
@@ -15,10 +14,13 @@ namespace RabbitMQ.Client.MessagePatterns.Configuration {
             _factory = new ConnectionFactory();
 
             var protocol = Protocols.FromEnvironment();
-            var settingsSection = (AmqpConnectionSettingsSection)ConfigurationManager.GetSection(sectionName);
+            var settingsSection = (AmqpConnectionSettingsSection)
+                ConfigurationManager.GetSection(sectionName);
             var connectionConfig = settingsSection.Connections[connectionName];
 
-            _servers = new[] { new AmqpTcpEndpoint(protocol, connectionConfig.Server, connectionConfig.Port) };
+            _servers = new[] { new AmqpTcpEndpoint(protocol,
+                                                   connectionConfig.Server,
+                                                   connectionConfig.Port) };
         }
 
         /// <summary>
@@ -26,7 +28,8 @@ namespace RabbitMQ.Client.MessagePatterns.Configuration {
         /// </summary>
         /// <param name="factory">the connection factory to use</param>
         /// <param name="servers">the AMQP TCP endpoints that connections should be created to</param>
-        public ConnectionBuilder(ConnectionFactory factory, params AmqpTcpEndpoint[] servers) {
+        public ConnectionBuilder(ConnectionFactory factory,
+                                 params AmqpTcpEndpoint[] servers) {
             _factory = factory;
             _servers = servers;
         }

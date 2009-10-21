@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using RabbitMQ.Client.Framing.v0_8;
 using RabbitMQ.Patterns.Unicast;
 using RabbitMQ.Util;
 

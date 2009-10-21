@@ -19,7 +19,6 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
     internal class Sender : ISender {
 
         protected IConnector m_connector;
-        protected SetupDelegate m_setup;
         protected String m_identity;
         protected String m_exchangeName = "";
         protected bool m_transactional = true;
@@ -124,7 +123,6 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
     internal class Receiver : IReceiver {
 
         protected IConnector m_connector;
-        protected SetupDelegate m_setup;
         protected String m_identity;
         protected String m_queueName = "";
 

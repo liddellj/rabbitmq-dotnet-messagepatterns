@@ -182,7 +182,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 
         protected IReceivedMessage Receive(bool blocking) {
             IReceivedMessage res = null;
-        	bool dequeueSucceeded = false;
+            bool dequeueSucceeded = false;
             while (true) {
                 if (Connector.Try(delegate() {
                             try  {
@@ -190,7 +190,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
                                 res = (blocking ?
                                        q.Dequeue() : q.DequeueNoWait(null))
                                     as IReceivedMessage;
-                            	dequeueSucceeded = true;
+                                dequeueSucceeded = true;
                             }
                             catch (EndOfStreamException)  {
                                 // EndOfStream with a missing
@@ -198,8 +198,8 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
                                 // CancelOk came in. Ignore the
                                 // exception, and let the null res
                                 // filter out. dequeueSuceeded will
-								// remain false, so then we'll throw
-								// the EOS Exception.
+                                // remain false, so then we'll throw
+                                // the EOS Exception.
                                 
                                 if (m_consumer.ShutdownReason != null) throw;
                             }

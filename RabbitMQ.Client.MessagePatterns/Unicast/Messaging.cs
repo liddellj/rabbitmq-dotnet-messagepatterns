@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using RabbitMQ.Client.Framing.v0_8;
 using RabbitMQ.Patterns.Unicast;
+using RabbitMQ.Util;
 
 namespace RabbitMQ.Client.MessagePatterns.Unicast {
     class Validator {
@@ -183,39 +184,14 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
                 }, Connect);
         }
 
-        public IReceivedMessage Receive() {
-            IReceivedMessage res = null;
-            while (true) {
-                if (Connector.Try(delegate() {
-                            try {
-                                res = m_consumer.Queue.Dequeue()
-                                    as IReceivedMessage;
-                            }
-                            catch (EndOfStreamException)  {
-                                // EndOfStream with a missing
-                                // ShutdownReason indicates that a
-                                // CancelOk came in. Ignore the
-                                // exception, and let the null res
-                                // filter out.
-                                
-                                if (m_consumer.ShutdownReason != null) throw;
-                            }
-                        }, Connect)) break;
-            }
-
-            if (res == null)  {
-                throw new EndOfStreamException();    
-            }
-
-            return res;
-        }
-
-        public IReceivedMessage ReceiveNoWait() {
+        protected IReceivedMessage Receive(bool blocking) {
             IReceivedMessage res = null;
             while (true) {
                 if (Connector.Try(delegate() {
                             try  {
-                                res = m_consumer.Queue.DequeueNoWait(null)
+                                SharedQueue q = m_consumer.Queue;
+                                res = (blocking ?
+                                       q.Dequeue() : q.DequeueNoWait(null))
                                     as IReceivedMessage;
                             }
                             catch (EndOfStreamException)  {
@@ -237,6 +213,14 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
             }
             
             return res;
+        }
+
+        public IReceivedMessage Receive() {
+            return Receive(true);
+        }
+
+        public IReceivedMessage ReceiveNoWait() {
+            return Receive(false);
         }
 
         public void Ack(IReceivedMessage m) {

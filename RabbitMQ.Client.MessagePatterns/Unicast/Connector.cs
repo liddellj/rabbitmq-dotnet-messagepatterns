@@ -84,8 +84,10 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
                     e = Try(delegate {
                             m_connection = ConnectionBuilder.CreateConnection();
                         });
-                    OnStateChange(ConnectorState.Connected);
-                    if (e == null) return m_connection;
+                    if (e == null){
+                        OnStateChange(ConnectorState.Connected);
+                        return m_connection;
+                    }
                     if (m_closed.WaitOne(Pause)) break;
                 }
                 throw (e);

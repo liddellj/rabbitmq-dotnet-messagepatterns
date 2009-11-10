@@ -63,6 +63,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
             lock (this) {
                 if (m_connection != null) m_connection.Abort();
             }
+            OnStateChange(ConnectorState.Disconnected);
         }
 
         void IDisposable.Dispose() {

@@ -27,8 +27,6 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         protected long m_msgIdPrefix;
         protected long m_msgIdSuffix;
 
-        private readonly object m_senderLock = new object();
-
         public event MessageEventHandler Sent;
 
         public IConnector Connector {
@@ -78,26 +76,22 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         }
 
         protected void Connect(IConnection conn) {
-            lock (m_senderLock) {
-                // Don't rebuild the channel if it is already valid. It is quite possible
-                // that a reconnection race caused the reconnect logic to be called multiple times.
-                if (m_channel != null && m_channel.CloseReason == null) {
-                    return;
-                }
-
-                m_channel = conn.CreateModel();
-                if (Transactional) m_channel.TxSelect();
-                SetupDelegate setupHandler = Setup;
-                if (setupHandler != null) Setup(m_channel);
+            // Don't rebuild the channel if it is already valid. It is quite possible
+            // that a reconnection race caused the reconnect logic to be called multiple times.
+            if (m_channel != null && m_channel.CloseReason == null) {
+                return;
             }
+
+            m_channel = conn.CreateModel();
+            if (Transactional) m_channel.TxSelect();
+            SetupDelegate setupHandler = Setup;
+            if (setupHandler != null) Setup(m_channel);
         }
 
         protected String NextId() {
-            lock (m_senderLock) {
-                String res = CurrentId;
-                m_msgIdSuffix++;
-                return res;
-            }
+            String res = CurrentId;
+            m_msgIdSuffix++;
+            return res;
         }
 
         public IMessage CreateMessage() {
@@ -117,13 +111,11 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         public void Send(IMessage m) {
             while (true) {
                 if (Connector.Try(delegate() {
-                            lock (m_senderLock) {
-                                m_channel.BasicPublish(ExchangeName,
-                                                       m.RoutingKey,
-                                                       m.Properties,
-                                                       m.Body);
-                                if (Transactional) m_channel.TxCommit();
-                            }
+                            m_channel.BasicPublish(ExchangeName,
+                                                   m.RoutingKey,
+                                                   m.Properties,
+                                                   m.Body);
+                            if (Transactional) m_channel.TxCommit();
                         }, Connect)) break;
             }
             //TODO: if/when IModel supports 'sent' notifications then

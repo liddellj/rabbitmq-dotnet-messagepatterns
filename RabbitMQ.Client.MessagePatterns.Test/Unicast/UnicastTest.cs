@@ -22,7 +22,7 @@ namespace RabbitMQ.Client.MessagePatterns.Test.Unicast {
 
         public UnicastTest() {
             _factory = new ConnectionFactory();
-            _server = new AmqpTcpEndpoint();
+            _server = new AmqpTcpEndpoint("misstwins");
             _builder = new ConnectionBuilder(_factory, _server);
         }
 

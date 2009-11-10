@@ -93,9 +93,11 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         }
 
         protected String NextId() {
-            String res = CurrentId;
-            m_msgIdSuffix++;
-            return res;
+            lock (m_senderLock) {
+                String res = CurrentId;
+                m_msgIdSuffix++;
+                return res;
+            }
         }
 
         public IMessage CreateMessage() {
@@ -115,11 +117,13 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         public void Send(IMessage m) {
             while (true) {
                 if (Connector.Try(delegate() {
-                            m_channel.BasicPublish(ExchangeName,
-                                                   m.RoutingKey,
-                                                   m.Properties,
-                                                   m.Body);
-                            if (Transactional) m_channel.TxCommit();
+                            lock (m_senderLock) {
+                                m_channel.BasicPublish(ExchangeName,
+                                                       m.RoutingKey,
+                                                       m.Properties,
+                                                       m.Body);
+                                if (Transactional) m_channel.TxCommit();
+                            }
                         }, Connect)) break;
             }
             //TODO: if/when IModel supports 'sent' notifications then
@@ -196,7 +200,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 
         public void Cancel() {
             Connector.Try(delegate () {
-                    m_channel.BasicCancel(m_consumerTag);
+                    lock (m_receiverLock) { m_channel.BasicCancel(m_consumerTag); }
                 }, Connect);
         }
 
@@ -206,7 +210,8 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
             while (true) {
                 if (Connector.Try(delegate() {
                             try  {
-                                SharedQueue q = m_consumer.Queue;
+                                SharedQueue q;
+                                lock (m_receiverLock) { q = m_consumer.Queue; }
                                 res = (blocking ?
                                        q.Dequeue() : q.DequeueNoWait(null))
                                     as IReceivedMessage;
@@ -243,16 +248,20 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         }
 
         public void Ack(IReceivedMessage m) {
-            ReceivedMessage r = m as ReceivedMessage;
-            if (r == null || r.Channel != m_channel) {
-                //must have been reconnected; drop ack since there is
-                //no place for it to go
-                return;
+            ReceivedMessage r = (ReceivedMessage) m;
+
+            lock (m_receiverLock) {
+                if (r.Channel != m_channel) {
+                    //must have been reconnected; drop ack since there is
+                    //no place for it to go
+                    return;
+                }
             }
+
             //Acks must not be retried since they are tied to the
             //channel on which the message was delivered
             Connector.Try(delegate() {
-                              m_channel.BasicAck(r.Delivery.DeliveryTag, false);
+                              lock (m_receiverLock) { m_channel.BasicAck(r.Delivery.DeliveryTag, false); }
                           }, Connect);
         }
     }

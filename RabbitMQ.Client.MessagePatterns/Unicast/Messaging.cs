@@ -27,6 +27,8 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         protected long m_msgIdPrefix;
         protected long m_msgIdSuffix;
 
+        private readonly object m_senderLock = new object();
+
         public event MessageEventHandler Sent;
 
         public IConnector Connector {
@@ -76,10 +78,18 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         }
 
         protected void Connect(IConnection conn) {
-            m_channel = conn.CreateModel();
-            if (Transactional) m_channel.TxSelect();
-            SetupDelegate setupHandler = Setup;
-            if (setupHandler != null) Setup(m_channel);
+            lock (m_senderLock) {
+                // Don't rebuild the channel if it is already valid. It is quite possible
+                // that a reconnection race caused the reconnect logic to be called multiple times.
+                if (m_channel != null && m_channel.CloseReason == null) {
+                    return;
+                }
+
+                m_channel = conn.CreateModel();
+                if (Transactional) m_channel.TxSelect();
+                SetupDelegate setupHandler = Setup;
+                if (setupHandler != null) Setup(m_channel);
+            }
         }
 
         protected String NextId() {
@@ -129,7 +139,9 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 
         protected QueueingMessageConsumer m_consumer;
         protected string m_consumerTag;
-        
+
+        private readonly object m_receiverLock = new object();
+
         public IConnector Connector {
             get { return m_connector; }
             set { m_connector = value; }
@@ -160,12 +172,20 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         }
 
         protected void Connect(IConnection conn) {
-            m_channel = conn.CreateModel();
-            SetupDelegate setupHandler = Setup;
-            if (setupHandler != null) Setup(m_channel);
-            Consume();
+            lock (m_receiverLock) {
+                // Don't rebuild the channel if it is already valid. It is quite possible
+                // that a reconnection race caused the reconnect logic to be called multiple times.
+                if (m_channel != null && m_channel.CloseReason == null) {
+                    return;
+                }
 
-            return;
+                m_channel = conn.CreateModel();
+                SetupDelegate setupHandler = Setup;
+                if (setupHandler != null) Setup(m_channel);
+                Consume();
+
+                return;
+            }
         }
 
         protected void Consume() {

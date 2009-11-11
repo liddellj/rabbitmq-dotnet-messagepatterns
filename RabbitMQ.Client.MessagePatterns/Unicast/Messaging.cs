@@ -124,6 +124,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         protected IConnector m_connector;
         protected String m_identity;
         protected String m_queueName = "";
+        protected bool m_exclusive = true;
 
         protected IModel m_channel;
 
@@ -145,6 +146,11 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         public String QueueName {
             get { return ("".Equals(m_queueName) ? Identity : m_queueName); }
             set { m_queueName = value; }
+        }
+
+        public bool Exclusive {
+            get { return m_exclusive; }
+            set { m_exclusive = value; }
         }
 
         public Receiver() { }
@@ -171,7 +177,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         protected void Consume() {
             m_consumer = new QueueingMessageConsumer(m_channel);
             m_consumerTag = m_channel.BasicConsume
-                (QueueName, false, null, m_consumer);
+                (QueueName, false, "", false, Exclusive, null, m_consumer);
         }
 
         public void Cancel() {
@@ -291,6 +297,11 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         public String QueueName {
             get { return m_receiver.QueueName; }
             set { m_receiver.QueueName = value; }
+        }
+
+        public bool Exclusive {
+            get { return m_receiver.Exclusive; }
+            set { m_receiver.Exclusive = value; }
         }
 
         public event MessageEventHandler Sent {

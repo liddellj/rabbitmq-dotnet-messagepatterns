@@ -66,6 +66,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         event SetupDelegate Setup;
 
         String QueueName { get; set; }
+        bool Exclusive { get; set; }
 
         void Init();
 

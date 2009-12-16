@@ -72,6 +72,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         void Cancel();
 
         IReceivedMessage Receive();
+        IReceivedMessage Receive(int timeout);
         IReceivedMessage ReceiveNoWait();
         void Ack(IReceivedMessage m);
     }

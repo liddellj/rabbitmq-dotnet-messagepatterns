@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading;
 using RabbitMQ.Util;
 
 namespace RabbitMQ.Client.MessagePatterns.Unicast {
@@ -180,16 +181,31 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
                 }, Connect);
         }
 
-        protected IReceivedMessage Receive(bool blocking) {
+        public IReceivedMessage Receive(int timeout) {
             IReceivedMessage res = null;
             bool dequeueSucceeded = false;
             while (true) {
                 if (Connector.Try(delegate() {
                             try  {
                                 SharedQueue q = m_consumer.Queue;
-                                res = (blocking ?
-                                       q.Dequeue() : q.DequeueNoWait(null))
-                                    as IReceivedMessage;
+                                switch (timeout) {
+                                    case 0:
+                                        res = q.DequeueNoWait(null) 
+                                            as IReceivedMessage;
+                                        break;
+                                    case Timeout.Infinite:
+                                        res = q.Dequeue() 
+                                            as IReceivedMessage;
+                                        break;
+                                    default:
+                                        object dequeueResult;
+                                        if (q.Dequeue(timeout, 
+                                            out dequeueResult)) {
+                                            res = dequeueResult 
+                                                as IReceivedMessage;
+                                        }
+                                        break;
+                                }
                                 dequeueSucceeded = true;
                             }
                             catch (EndOfStreamException)  {
@@ -215,11 +231,11 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         }
 
         public IReceivedMessage Receive() {
-            return Receive(true);
+            return Receive(Timeout.Infinite);
         }
 
         public IReceivedMessage ReceiveNoWait() {
-            return Receive(false);
+            return Receive(0);
         }
 
         public void Ack(IReceivedMessage m) {
@@ -334,6 +350,10 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 
         public IReceivedMessage Receive() {
             return m_receiver.Receive();
+        }
+
+        public IReceivedMessage Receive(int timeout) {
+            return m_receiver.Receive(timeout);
         }
 
         public IReceivedMessage ReceiveNoWait() {

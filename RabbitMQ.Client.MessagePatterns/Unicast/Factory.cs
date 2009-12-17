@@ -2,7 +2,7 @@
 
 namespace RabbitMQ.Client.MessagePatterns.Unicast {
     public static class Factory {
-        public static IConnector CreateConnector(ConnectionBuilder builder) {
+        public static IConnector CreateConnector(ConnectionFactory builder) {
             return new Connector(builder);
         }
 

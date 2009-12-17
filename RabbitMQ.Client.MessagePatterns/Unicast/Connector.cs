@@ -11,7 +11,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         protected int m_attempts = 60;
 
         protected ConnectorState m_state = ConnectorState.Disconnected;
-        protected ConnectionBuilder m_builder;
+        protected ConnectionFactory m_factory;
         protected IConnection m_connection;
         protected ManualResetEvent m_closed = new ManualResetEvent(false);
 
@@ -24,8 +24,8 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
             set { m_attempts = value; }
         }
 
-        public ConnectionBuilder ConnectionBuilder {
-            get { return m_builder; }
+        public ConnectionFactory ConnectionFactory {
+            get { return m_factory; }
         }
 
         public ConnectorState State {
@@ -34,8 +34,8 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 
         public event ConnectorStateHandler StateChanged;
 
-        public Connector(ConnectionBuilder builder) {
-            m_builder = builder;
+        public Connector(ConnectionFactory factory) {
+            m_factory = factory;
         }
 
         public void Connect(ConnectionDelegate d) {
@@ -82,7 +82,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
                 Exception e = null;
                 for (int i = 0; i < Attempts; i++) {
                     e = Try(delegate {
-                            m_connection = ConnectionBuilder.CreateConnection();
+                            m_connection = ConnectionFactory.CreateConnection();
                         });
                     if (e == null){
                         OnStateChange(ConnectorState.Connected);

@@ -22,8 +22,6 @@ namespace RabbitMQ.Client.MessagePatterns.Test.Unicast {
 
         public UnicastTest() {
             _factory = new ConnectionFactory();
-            _server = new AmqpTcpEndpoint();
-            _builder = new ConnectionBuilder(_factory, _server);
         }
 
         protected void DeclareExchange(IModel m, string name, string type) {
@@ -40,7 +38,7 @@ namespace RabbitMQ.Client.MessagePatterns.Test.Unicast {
 
         [Test]
         public void TestDirect() {
-            using (IConnector conn = Factory.CreateConnector(_builder)) {
+            using (IConnector conn = Factory.CreateConnector(_factory)) {
                 //create two parties
                 IMessaging foo = Factory.CreateMessaging();
                 foo.Connector = conn;

@@ -130,7 +130,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 
         protected QueueingMessageConsumer m_consumer;
         protected string m_consumerTag;
-        
+
         public IConnector Connector {
             get { return m_connector; }
             set { m_connector = value; }
@@ -190,18 +190,18 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
                                 SharedQueue q = m_consumer.Queue;
                                 switch (timeout) {
                                     case 0:
-                                        res = q.DequeueNoWait(null) 
+                                        res = q.DequeueNoWait(null)
                                             as IReceivedMessage;
                                         break;
                                     case Timeout.Infinite:
-                                        res = q.Dequeue() 
+                                        res = q.Dequeue()
                                             as IReceivedMessage;
                                         break;
                                     default:
                                         object dequeueResult;
-                                        if (q.Dequeue(timeout, 
+                                        if (q.Dequeue(timeout,
                                             out dequeueResult)) {
-                                            res = dequeueResult 
+                                            res = dequeueResult
                                                 as IReceivedMessage;
                                         }
                                         break;
@@ -216,17 +216,13 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
                                 // filter out. dequeueSuceeded will
                                 // remain false, so then we'll throw
                                 // the EOS Exception.
-                                
                                 if (m_consumer.ShutdownReason != null) throw;
                             }
-                            
                         }, Connect)) break;
             }
-            
             if (res == null && !dequeueSucceeded)  {
-                throw new EndOfStreamException();    
+                throw new EndOfStreamException();
             }
-            
             return res;
         }
 
@@ -365,7 +361,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         }
 
         public void Cancel()  {
-            m_receiver.Cancel();    
+            m_receiver.Cancel();
         }
 
         public Messaging() {

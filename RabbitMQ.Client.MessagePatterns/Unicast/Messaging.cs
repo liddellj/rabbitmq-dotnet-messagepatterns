@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading;
 using RabbitMQ.Util;
 
 namespace RabbitMQ.Client.MessagePatterns.Unicast {
@@ -130,7 +131,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 
         protected QueueingMessageConsumer m_consumer;
         protected string m_consumerTag;
-        
+
         public IConnector Connector {
             get { return m_connector; }
             set { m_connector = value; }
@@ -186,16 +187,17 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
                 }, Connect);
         }
 
-        protected IReceivedMessage Receive(bool blocking) {
+        public IReceivedMessage Receive(int timeout) {
             IReceivedMessage res = null;
             bool dequeueSucceeded = false;
             while (true) {
                 if (Connector.Try(delegate() {
                             try  {
                                 SharedQueue q = m_consumer.Queue;
-                                res = (blocking ?
-                                       q.Dequeue() : q.DequeueNoWait(null))
-                                    as IReceivedMessage;
+                                object dequeueResult;
+                                if (q.Dequeue(timeout, out dequeueResult)) {
+                                    res = dequeueResult as IReceivedMessage;
+                                }
                                 dequeueSucceeded = true;
                             }
                             catch (EndOfStreamException)  {
@@ -206,26 +208,22 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
                                 // filter out. dequeueSuceeded will
                                 // remain false, so then we'll throw
                                 // the EOS Exception.
-                                
                                 if (m_consumer.ShutdownReason != null) throw;
                             }
-                            
                         }, Connect)) break;
             }
-            
             if (res == null && !dequeueSucceeded)  {
-                throw new EndOfStreamException();    
+                throw new EndOfStreamException();
             }
-            
             return res;
         }
 
         public IReceivedMessage Receive() {
-            return Receive(true);
+            return Receive(Timeout.Infinite);
         }
 
         public IReceivedMessage ReceiveNoWait() {
-            return Receive(false);
+            return Receive(0);
         }
 
         public void Ack(IReceivedMessage m) {
@@ -347,6 +345,10 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
             return m_receiver.Receive();
         }
 
+        public IReceivedMessage Receive(int timeout) {
+            return m_receiver.Receive(timeout);
+        }
+
         public IReceivedMessage ReceiveNoWait() {
             return m_receiver.ReceiveNoWait();
         }
@@ -356,7 +358,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         }
 
         public void Cancel()  {
-            m_receiver.Cancel();    
+            m_receiver.Cancel();
         }
 
         public Messaging() {

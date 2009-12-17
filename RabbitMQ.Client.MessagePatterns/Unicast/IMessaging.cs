@@ -50,7 +50,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         void Init();
         void Init(long msgIdPrefix);
 
-        void Close();
+        void Terminate();
 
         IMessage CreateMessage();
         IMessage CreateReply(IMessage m);
@@ -74,7 +74,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         void Init();
 
         void Cancel();
-        void Close();
+        void Terminate();
 
         IReceivedMessage Receive();
         IReceivedMessage Receive(int timeout);

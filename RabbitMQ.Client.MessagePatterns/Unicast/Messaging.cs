@@ -188,23 +188,9 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
                 if (Connector.Try(delegate() {
                             try  {
                                 SharedQueue q = m_consumer.Queue;
-                                switch (timeout) {
-                                    case 0:
-                                        res = q.DequeueNoWait(null)
-                                            as IReceivedMessage;
-                                        break;
-                                    case Timeout.Infinite:
-                                        res = q.Dequeue()
-                                            as IReceivedMessage;
-                                        break;
-                                    default:
-                                        object dequeueResult;
-                                        if (q.Dequeue(timeout,
-                                            out dequeueResult)) {
-                                            res = dequeueResult
-                                                as IReceivedMessage;
-                                        }
-                                        break;
+                                object dequeueResult;
+                                if (q.Dequeue(timeout, out dequeueResult)) {
+                                    res = dequeueResult as IReceivedMessage;
                                 }
                                 dequeueSucceeded = true;
                             }

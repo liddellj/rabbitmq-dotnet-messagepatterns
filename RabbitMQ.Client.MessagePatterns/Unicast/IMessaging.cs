@@ -33,7 +33,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
     /// <summary>
     /// Reliable sender interface.
     /// </summary>
-    public interface ISender : IMessagingCommon {
+    public interface ISender : IMessagingCommon, IDisposable {
         /// <summary>
         /// Event issued when a connection requires setup. This will be fired upon initial connection, and
         /// then whenever a failure requires the connection to be re-established.
@@ -50,6 +50,8 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         void Init();
         void Init(long msgIdPrefix);
 
+        void Terminate();
+
         IMessage CreateMessage();
         IMessage CreateReply(IMessage m);
         void Send(IMessage m);
@@ -58,7 +60,8 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
     /// <summary>
     /// Reliable receiver interface.
     /// </summary>
-    public interface IReceiver : IMessagingCommon {
+    public interface IReceiver : IMessagingCommon, IDisposable
+    {
         /// <summary>
         /// Event issued when a connection requires setup. This will be fired upon initial connection, and
         /// then whenever a failure requires the connection to be re-established.
@@ -71,6 +74,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         void Init();
 
         void Cancel();
+        void Terminate();
 
         IReceivedMessage Receive();
         IReceivedMessage Receive(int timeout);

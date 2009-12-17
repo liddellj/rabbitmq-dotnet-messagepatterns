@@ -71,6 +71,10 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
             Connector.Connect(Connect);
         }
 
+        public void Terminate() {
+            if (m_channel != null) m_channel.Close();
+        }
+
         protected void CheckProps() {
             Validator.CheckNotNull(Connector, this, "Connector");
             Validator.CheckNotNull(ExchangeName, this, "ExchangeName");
@@ -118,6 +122,9 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
             if (Sent != null) Sent(m);
         }
 
+        void IDisposable.Dispose() {
+            Terminate();
+        }
     }
 
     internal class Receiver : IReceiver {
@@ -187,6 +194,10 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
                 }, Connect);
         }
 
+        public void Terminate() {
+            if (m_channel != null) m_channel.Close();
+        }
+
         public IReceivedMessage Receive(int timeout) {
             IReceivedMessage res = null;
             bool dequeueSucceeded = false;
@@ -238,6 +249,10 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
             Connector.Try(delegate() {
                               m_channel.BasicAck(r.Delivery.DeliveryTag, false);
                           }, Connect);
+        }
+
+        void IDisposable.Dispose() {
+            Terminate();
         }
     }
 
@@ -329,6 +344,11 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
             (this as IReceiver).Init();
         }
 
+        public void Terminate() {
+            m_sender.Terminate();
+            m_receiver.Terminate();
+        }
+
         public IMessage CreateMessage() {
             return m_sender.CreateMessage();
         }
@@ -359,6 +379,10 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 
         public void Cancel()  {
             m_receiver.Cancel();
+        }
+
+        void IDisposable.Dispose() {
+            Terminate();
         }
 
         public Messaging() {

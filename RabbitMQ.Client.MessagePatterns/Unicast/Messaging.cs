@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading;
 using RabbitMQ.Util;
 
 namespace RabbitMQ.Client.MessagePatterns.Unicast {
@@ -70,6 +71,10 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
             Connector.Connect(Connect);
         }
 
+        public void Terminate() {
+            if (m_channel != null) m_channel.Close();
+        }
+
         protected void CheckProps() {
             Validator.CheckNotNull(Connector, this, "Connector");
             Validator.CheckNotNull(ExchangeName, this, "ExchangeName");
@@ -123,6 +128,9 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
             if (Sent != null) Sent(m);
         }
 
+        void IDisposable.Dispose() {
+            Terminate();
+        }
     }
 
     internal class Receiver : IReceiver {
@@ -130,6 +138,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         protected IConnector m_connector;
         protected String m_identity;
         protected String m_queueName = "";
+        protected bool m_exclusive = true;
 
         protected IModel m_channel;
 
@@ -153,6 +162,11 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         public String QueueName {
             get { return ("".Equals(m_queueName) ? Identity : m_queueName); }
             set { m_queueName = value; }
+        }
+
+        public bool Exclusive {
+            get { return m_exclusive; }
+            set { m_exclusive = value; }
         }
 
         public Receiver() { }
@@ -187,7 +201,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         protected void Consume() {
             m_consumer = new QueueingMessageConsumer(m_channel);
             m_consumerTag = m_channel.BasicConsume
-                (QueueName, false, null, m_consumer);
+                (QueueName, false, "", false, Exclusive, null, m_consumer);
         }
 
         public void Cancel() {
@@ -196,7 +210,11 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
                 }, Connect);
         }
 
-        protected IReceivedMessage Receive(bool blocking) {
+        public void Terminate() {
+            if (m_channel != null) m_channel.Close();
+        }
+
+        public IReceivedMessage Receive(int timeout) {
             IReceivedMessage res = null;
             bool dequeueSucceeded = false;
             while (true) {
@@ -204,9 +222,10 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
                             try  {
                                 SharedQueue q;
                                 lock (m_receiverLock) { q = m_consumer.Queue; }
-                                res = (blocking ?
-                                       q.Dequeue() : q.DequeueNoWait(null))
-                                    as IReceivedMessage;
+                                object dequeueResult;
+                                if (q.Dequeue(timeout, out dequeueResult)) {
+                                    res = dequeueResult as IReceivedMessage;
+                                }
                                 dequeueSucceeded = true;
                             }
                             catch (EndOfStreamException)  {
@@ -217,26 +236,22 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
                                 // filter out. dequeueSuceeded will
                                 // remain false, so then we'll throw
                                 // the EOS Exception.
-                                
                                 if (m_consumer.ShutdownReason != null) throw;
                             }
-                            
                         }, Connect)) break;
             }
-            
             if (res == null && !dequeueSucceeded)  {
-                throw new EndOfStreamException();    
+                throw new EndOfStreamException();
             }
-            
             return res;
         }
 
         public IReceivedMessage Receive() {
-            return Receive(true);
+            return Receive(Timeout.Infinite);
         }
 
         public IReceivedMessage ReceiveNoWait() {
-            return Receive(false);
+            return Receive(0);
         }
 
         public void Ack(IReceivedMessage m) {
@@ -255,6 +270,10 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
             Connector.Try(delegate() {
                               lock (m_receiverLock) { m_channel.BasicAck(r.Delivery.DeliveryTag, false); }
                           }, Connect);
+        }
+
+        void IDisposable.Dispose() {
+            Terminate();
         }
     }
 
@@ -314,6 +333,11 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
             set { m_receiver.QueueName = value; }
         }
 
+        public bool Exclusive {
+            get { return m_receiver.Exclusive; }
+            set { m_receiver.Exclusive = value; }
+        }
+
         public event MessageEventHandler Sent {
             add    { m_sender.Sent += value; }
             remove { m_sender.Sent -= value; }
@@ -341,6 +365,11 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
             (this as IReceiver).Init();
         }
 
+        public void Terminate() {
+            m_sender.Terminate();
+            m_receiver.Terminate();
+        }
+
         public IMessage CreateMessage() {
             return m_sender.CreateMessage();
         }
@@ -357,6 +386,10 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
             return m_receiver.Receive();
         }
 
+        public IReceivedMessage Receive(int timeout) {
+            return m_receiver.Receive(timeout);
+        }
+
         public IReceivedMessage ReceiveNoWait() {
             return m_receiver.ReceiveNoWait();
         }
@@ -366,7 +399,11 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         }
 
         public void Cancel()  {
-            m_receiver.Cancel();    
+            m_receiver.Cancel();
+        }
+
+        void IDisposable.Dispose() {
+            Terminate();
         }
 
         public Messaging() {

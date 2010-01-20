@@ -81,12 +81,6 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         }
 
         protected void Connect(IConnection conn) {
-            // Don't rebuild the channel if it is already valid. It is quite possible
-            // that a reconnection race caused the reconnect logic to be called multiple times.
-            if (m_channel != null && m_channel.CloseReason == null) {
-                return;
-            }
-
             m_channel = conn.CreateModel();
             if (Transactional) m_channel.TxSelect();
             SetupDelegate setupHandler = Setup;
@@ -211,7 +205,9 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         }
 
         public void Terminate() {
-            if (m_channel != null) m_channel.Close();
+            lock (m_receiverLock) {
+                if (m_channel != null) m_channel.Close();
+            }
         }
 
         public IReceivedMessage Receive(int timeout) {
@@ -257,18 +253,18 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         public void Ack(IReceivedMessage m) {
             ReceivedMessage r = (ReceivedMessage) m;
 
-            lock (m_receiverLock) {
-                if (r.Channel != m_channel) {
-                    //must have been reconnected; drop ack since there is
-                    //no place for it to go
-                    return;
-                }
-            }
-
             //Acks must not be retried since they are tied to the
             //channel on which the message was delivered
             Connector.Try(delegate() {
-                              lock (m_receiverLock) { m_channel.BasicAck(r.Delivery.DeliveryTag, false); }
+                              lock (m_receiverLock) {
+                                  if (r.Channel != m_channel) {
+                                      //must have been reconnected; drop ack since there is
+                                      //no place for it to go
+                                      return;
+                                  }
+
+                                  m_channel.BasicAck(r.Delivery.DeliveryTag, false);
+                              }
                           }, Connect);
         }
 

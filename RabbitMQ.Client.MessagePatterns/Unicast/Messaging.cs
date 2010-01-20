@@ -205,9 +205,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         }
 
         public void Terminate() {
-            lock (m_receiverLock) {
-                if (m_channel != null) m_channel.Close();
-            }
+            lock (m_receiverLock) { if (m_channel != null) m_channel.Close(); }
         }
 
         public IReceivedMessage Receive(int timeout) {

@@ -139,6 +139,8 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         protected QueueingMessageConsumer m_consumer;
         protected string m_consumerTag;
 
+        private readonly object m_receiverLock = new object();
+
         public IConnector Connector {
             get { return m_connector; }
             set { m_connector = value; }
@@ -174,12 +176,20 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         }
 
         protected void Connect(IConnection conn) {
-            m_channel = conn.CreateModel();
-            SetupDelegate setupHandler = Setup;
-            if (setupHandler != null) Setup(m_channel);
-            Consume();
+            lock (m_receiverLock) {
+                // Don't rebuild the channel if it is already valid. It is quite possible
+                // that a reconnection race caused the reconnect logic to be called multiple times.
+                if (m_channel != null && m_channel.CloseReason == null) {
+                    return;
+                }
 
-            return;
+                m_channel = conn.CreateModel();
+                SetupDelegate setupHandler = Setup;
+                if (setupHandler != null) Setup(m_channel);
+                Consume();
+
+                return;
+            }
         }
 
         protected void Consume() {
@@ -190,12 +200,12 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
 
         public void Cancel() {
             Connector.Try(delegate () {
-                    m_channel.BasicCancel(m_consumerTag);
+                    lock (m_receiverLock) { m_channel.BasicCancel(m_consumerTag); }
                 }, Connect);
         }
 
         public void Terminate() {
-            if (m_channel != null) m_channel.Close();
+            lock (m_receiverLock) { if (m_channel != null) m_channel.Close(); }
         }
 
         public IReceivedMessage Receive(int timeout) {
@@ -204,7 +214,8 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
             while (true) {
                 if (Connector.Try(delegate() {
                             try  {
-                                SharedQueue q = m_consumer.Queue;
+                                SharedQueue q;
+                                lock (m_receiverLock) { q = m_consumer.Queue; }
                                 object dequeueResult;
                                 if (q.Dequeue(timeout, out dequeueResult)) {
                                     res = dequeueResult as IReceivedMessage;
@@ -238,16 +249,20 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         }
 
         public void Ack(IReceivedMessage m) {
-            ReceivedMessage r = m as ReceivedMessage;
-            if (r == null || r.Channel != m_channel) {
-                //must have been reconnected; drop ack since there is
-                //no place for it to go
-                return;
-            }
+            ReceivedMessage r = (ReceivedMessage) m;
+
             //Acks must not be retried since they are tied to the
             //channel on which the message was delivered
             Connector.Try(delegate() {
-                              m_channel.BasicAck(r.Delivery.DeliveryTag, false);
+                              lock (m_receiverLock) {
+                                  if (r.Channel != m_channel) {
+                                      //must have been reconnected; drop ack since there is
+                                      //no place for it to go
+                                      return;
+                                  }
+
+                                  m_channel.BasicAck(r.Delivery.DeliveryTag, false);
+                              }
                           }, Connect);
         }
 

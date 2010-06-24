@@ -23,7 +23,8 @@ namespace RabbitMQ.Client.MessagePatterns.Test.Unicast {
         public UnicastTest() {
             _factory = new ConnectionFactory();
             _server = new AmqpTcpEndpoint();
-            _builder = new ConnectionBuilder(_factory, _server);
+            _factory.Endpoint = _server;
+            _builder = new ConnectionBuilder(_factory);
         }
 
         protected void DeclareExchange(IModel m, string name, string type) {

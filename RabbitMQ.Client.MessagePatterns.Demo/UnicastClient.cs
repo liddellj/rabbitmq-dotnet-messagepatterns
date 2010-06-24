@@ -49,7 +49,7 @@ namespace RabbitMQ.Client.MessagePatterns.Demo {
 
         void Run(Address me, Address you, AmqpTcpEndpoint server, int sleep) {
             using (IConnector conn =
-                   Factory.CreateConnector(new ConnectionBuilder(new ConnectionFactory(), server))) {
+                   Factory.CreateConnector(new ConnectionBuilder(new ConnectionFactory(server)))) {
                 IMessaging m = Factory.CreateMessaging();
                 m.Connector = conn;
                 m.Identity = me;

@@ -60,10 +60,10 @@ namespace RabbitMQ.Client.MessagePatterns.Demo {
                     //We declare the recipient queue here to avoid
                     //sending messages into the ether. That's an ok
                     //thing to do for testing
-                    channel.QueueDeclare(you, true); //durable
+                    channel.QueueDeclare(you, true, false, false, null);
                 };
                 m.SetupReceiver += delegate(IModel channel) {
-                    channel.QueueDeclare(me, true); //durable
+                    channel.QueueDeclare(me, true, false, false, null);
                 };
                 m.Init();
                 byte[] body = new byte[0];

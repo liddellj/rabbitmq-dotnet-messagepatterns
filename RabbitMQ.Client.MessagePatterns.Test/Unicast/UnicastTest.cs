@@ -28,15 +28,15 @@ namespace RabbitMQ.Client.MessagePatterns.Test.Unicast {
         }
 
         protected void DeclareExchange(IModel m, string name, string type) {
-            m.ExchangeDeclare(name, type, false, false, true, false, false, null);
+            m.ExchangeDeclare(name, type, false, true, null);
         }
 
         protected void DeclareQueue(IModel m, string name) {
-            m.QueueDeclare(name, false, false, false, true, false, null);
+            m.QueueDeclare(name, false, false, true, null);
         }
 
         protected void BindQueue(IModel m, string q, string x, string rk) {
-            m.QueueBind(q, x, rk, false, null);
+            m.QueueBind(q, x, rk, null);
         }
 
         [Test]

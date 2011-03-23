@@ -36,7 +36,7 @@ namespace RabbitMQ.Client.MessagePatterns.Test.Unicast {
         }
 
         protected void BindQueue(IModel m, string q, string x, string rk) {
-            m.QueueBind(q, x, rk, false, null);
+            m.QueueBind(q, x, rk, null);
         }
 
         [Test]

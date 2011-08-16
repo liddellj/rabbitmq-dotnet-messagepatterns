@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Text;
+using System.Collections;
 using RabbitMQ.Client.Events;
 
 namespace RabbitMQ.Client.MessagePatterns.Unicast {
@@ -13,6 +15,7 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
         protected IBasicProperties m_properties;
         protected byte[] m_body;
         protected string m_routingKey;
+        private readonly string m_userIdKey = "messaging-user-id";
 
         public IBasicProperties Properties {
             get { return m_properties; }
@@ -26,12 +29,25 @@ namespace RabbitMQ.Client.MessagePatterns.Unicast {
             get { return m_routingKey; }
             set { m_routingKey = value; }
         }
-
-        public Address From {
-            get { return Properties.UserId; }
-            set {
-                Properties.UserId = value;
-                if (value == null) Properties.ClearUserId();
+        public Address From
+        {
+            get
+            {
+                IDictionary headers = Properties.Headers;
+                if (headers != null && headers.Contains(m_userIdKey))
+                {
+                    Object reply = headers[m_userIdKey];
+                    if (reply == null) return null;
+                    return Encoding.UTF8.GetString((byte[]) reply);
+                }
+                return null;
+            }
+            set
+            {
+                IDictionary headers = Properties.Headers;
+                if (headers == null) headers = new Hashtable();
+                headers[m_userIdKey] = Encoding.UTF8.GetBytes(value);
+                Properties.Headers = headers;
             }
         }
         public Address To {

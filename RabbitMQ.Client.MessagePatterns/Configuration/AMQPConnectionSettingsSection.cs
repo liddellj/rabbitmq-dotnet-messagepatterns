@@ -12,8 +12,10 @@ namespace RabbitMQ.Client.MessagePatterns.Configuration {
     ///             <section name="amqp" type="RabbitMQ.Client.MessagePatterns.Configuration.AmqpConnectionSettingsSection, RabbitMQ.Client.MessagePatterns" />
     ///         </configSections>
     ///         <amqp>
-    ///            <connection name="trades" server="localhost" />
-    ///            <connection name="curves" server="localhost" port="5672" />
+    ///           <connections>
+    ///             <connection name="trades" server="localhost" />
+    ///             <connection name="curves" server="localhost" port="5672" username="guest" password="guest" />
+    ///           </connections>
     ///         </amqp>
     ///     </config>
     ///   </code>
@@ -160,6 +162,26 @@ namespace RabbitMQ.Client.MessagePatterns.Configuration {
         public bool AutoClose {
             get { return (bool)this["autoclose"]; }
             set { this["autoclose"] = value; }
+        }
+
+        /// <summary>
+        /// Username to use when authenticating to the server.
+        /// </summary>
+        [ConfigurationProperty("username", IsRequired = false, DefaultValue = "guest")]
+        public string Username
+        {
+            get { return (string)this["username"]; }
+            set { this["username"] = value; }
+        }
+        
+        /// <summary>
+        /// Password to use when authenticating to the server.
+        /// </summary>
+        [ConfigurationProperty("password", IsRequired = false, DefaultValue = "guest")]
+        public string Password
+        {
+            get { return (string)this["password"]; }
+            set { this["password"] = value; }
         }
     }
 }

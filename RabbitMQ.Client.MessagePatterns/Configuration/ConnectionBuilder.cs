@@ -20,6 +20,8 @@ namespace RabbitMQ.Client.MessagePatterns.Configuration {
             _factory.Endpoint = new AmqpTcpEndpoint(protocol,
                                                     connectionConfig.Server,
                                                     connectionConfig.Port);
+            _factory.UserName = connectionConfig.Username;
+            _factory.Password = connectionConfig.Password;
         }
 
         /// <summary>

@@ -12,8 +12,10 @@ namespace RabbitMQ.Client.MessagePatterns.Configuration {
     ///             <section name="amqp" type="RabbitMQ.Client.MessagePatterns.Configuration.AmqpConnectionSettingsSection, RabbitMQ.Client.MessagePatterns" />
     ///         </configSections>
     ///         <amqp>
-    ///            <connection name="trades" server="localhost" />
-    ///            <connection name="curves" server="localhost" port="5672" />
+    ///           <connections>
+    ///             <connection name="trades" server="localhost" />
+    ///             <connection name="curves" server="localhost" port="5672" />
+    ///           </connections>
     ///         </amqp>
     ///     </config>
     ///   </code>
